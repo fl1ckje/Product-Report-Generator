@@ -1,12 +1,18 @@
+"""Свойства приложения"""
+
 from enums import Marketplace
 
 
-class AppConfig:
+class AppProps:
+    """Свойства приложения"""
     __marketplace: Marketplace
 
-    def __init__(self, marketplace: Marketplace):
-        self.__marketplace = marketplace
+    @staticmethod
+    def set_marketplace(marketplace: Marketplace):
+        """Устанавливает маркетплейс приложения"""
+        AppProps.__marketplace = marketplace
 
     @staticmethod
     def marketplace():
-        return AppConfig.__marketplace
+        """Возвращает маркетплейс приложения"""
+        return AppProps.__marketplace

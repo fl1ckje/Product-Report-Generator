@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('cfg/ozon.json', 'cfg')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

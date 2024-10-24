@@ -1,92 +1,102 @@
+"""Представляет графический интерфейс приложения"""
+
 from os import getcwd
 from os.path import dirname
-from pathlib import Path
-from sys import exception
 
-import pandas as pd
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QLineEdit, QPushButton, QFileDialog, \
-    QMessageBox
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QWidget,  QVBoxLayout, QLabel, QHBoxLayout, QLineEdit,  # pylint: disable=no-name-in-module
+                               QPushButton, QFileDialog, QMessageBox)
+from PySide6.QtCore import Qt  # pylint: disable=no-name-in-module
 
-from analysis_tools import analyse_ozon_data
-from cfg import Config
-from enums import Marketplace
+from app_props import AppProps
+from enums import Marketplace, MessageType
 from readers import read_excel_data
-from writers import write_ozon_items, excel_file_filter
+import analysis_tools.ozon
+import data_packs.ozon
+import writers
+import writers.ozon
 
 
 class MainWindow(QWidget):
+    """Главное окно приложения"""
+
     def __init__(self):
         super().__init__()
-        self.cwd = getcwd()
-        self.save_filepath = self.cwd
 
-        self.setWindowTitle(f'Marketplace product report generator for {Config.marketplace().name}')
+        self.setWindowTitle('Анализ финансового отчёта'
+                            f'{AppProps.marketplace().value}')
         self.setFixedSize(640, 0)
 
         layout = QVBoxLayout(self)
         self.setLayout(layout)
 
-        self.input_file_browser = FilepathBrowser('Input data filepath:',
-                                                  'Select marketplace data file', self.cwd)
+        self.input_file_browser = FilepathBrowser(
+            'Файл с данными:', 'Укажите путь к файлу с данными', getcwd())
         layout.addWidget(self.input_file_browser)
 
-        generate_report_button = QPushButton("Generate report")
-        generate_report_button.clicked.connect(self.generate_report)
-        layout.addWidget(generate_report_button, alignment=Qt.AlignmentFlag.AlignHCenter)
-
-        # self.saveDialog = QFileDialog(self)
-        # self.saveDialog.setFileMode(QFileDialog.FileMode.AnyFile)
+        generate_report_button = QPushButton("Проанализировать")
+        generate_report_button.clicked.connect(self.analyse_data)
+        layout.addWidget(generate_report_button,
+                         alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self.show()
 
-    def generate_report(self):
+    def analyse_data(self):
+        """Показывает отчёт"""
         try:
-            df = read_excel_data(self.input_file_browser.filepath)
-            print(df.head(1))
-            if Config.marketplace() == Marketplace.OZON:
-                data = analyse_ozon_data(df)
-                self.get_save_filepath(data)
+            df = read_excel_data(self.input_file_browser.filepath())
+            if AppProps.marketplace() == Marketplace.OZON:
+                data = data_packs.ozon.OzonData(df)
+                analysis_tools.ozon.analyse_data(data)
+                writers.ozon.save_data(
+                    self.input_file_browser.filepath(), data)
             # elif Config.marketplace() == Marketplace.WB:
+            self.show_message(MessageType.INFO, 'Результат',
+                              'Анализ проведён успешно!')
         except (ValueError, KeyError, FileNotFoundError,
-                PermissionError, Exception) as e:
-            QMessageBox.critical(self, 'Error', str(e))
-            return
+                PermissionError) as e:
+            self.show_message(MessageType.ERROR, 'Ошибка', str(e))
 
-    def get_save_filepath(self, data: dict[str, pd.DataFrame]):
-        self.save_filepath = str(Path(self.input_file_browser.file_dir, 'output.xlsx'))
-        self.save_filepath, _ = QFileDialog().getSaveFileName(self,
-                                                              'Save report as',
-                                                              self.save_filepath,
-                                                              excel_file_filter)
-        if self.save_filepath:
-            write_ozon_items(self.save_filepath, data)
-            QMessageBox().information(self, 'Result', 'Report is saved!')
+    def show_message(self, msg_type: MessageType, title: str, text: str):
+        """Выводит сообщение в окне"""
+        if msg_type == MessageType.INFO:
+            return QMessageBox.information(self, title, text)
+
+        if msg_type == MessageType.ERROR:
+            return QMessageBox.critical(self, title, text)
+
+        raise NotImplementedError('Тип MessageBox не реалиован')
 
 
 class FilepathBrowser(QWidget):
-    def __init__(self, label_caption, dialog_caption, file_dir):
+    """Виджет установки и показа пути к файлу"""
+
+    def __init__(self, widget_caption, dialog_caption, file_dir):
         super().__init__()
+
         self.__caption = dialog_caption
-        self.file_dir = file_dir
-        self.filepath = ''
+        self.__file_dir = file_dir
 
         layout = QHBoxLayout()
         self.setLayout(layout)
 
-        label = QLabel(label_caption)
+        label = QLabel(widget_caption)
         layout.addWidget(label)
 
         self.__path_input = QLineEdit()
-        self.__path_input.setReadOnly(True)
         layout.addWidget(self.__path_input)
 
-        browse_button = QPushButton('Browse...')
-        browse_button.clicked.connect(self.get_filepath)
+        browse_button = QPushButton('Обзор...')
+        browse_button.clicked.connect(self.browse_file)
         layout.addWidget(browse_button)
 
-    def get_filepath(self):
-        self.filepath, _ = QFileDialog.getOpenFileName(self, self.__caption, self.file_dir, excel_file_filter)
-        if self.filepath:
-            self.__path_input.setText(self.filepath)
-            self.file_dir = dirname(self.filepath)
+    def browse_file(self):
+        """Показывает диалог для установки пути к файлу"""
+        filepath, _ = QFileDialog.getOpenFileName(self, self.__caption, self.__file_dir,
+                                                  'Файл Excel (*.xls *.xlsx)')
+        if filepath:
+            self.__path_input.setText(filepath)
+            self.__file_dir = dirname(filepath)
+
+    def filepath(self):
+        """Возвращает путь к файлу"""
+        return self.__path_input.text()
