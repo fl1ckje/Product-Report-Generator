@@ -1,6 +1,6 @@
-from enum import Enum, auto
+from enum import Enum
 
 
 class Marketplace(Enum):
-    OZON = auto()
-    WB = auto()
+    OZON = 'Ozon'
+    WB = 'Wildberries'
