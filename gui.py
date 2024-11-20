@@ -22,7 +22,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle('Анализ финансового отчёта'
+        self.setWindowTitle('Анализ финансового отчёта '
                             f'{AppProps.marketplace().value}')
         self.setFixedSize(640, 0)
 
