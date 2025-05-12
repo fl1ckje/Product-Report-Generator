@@ -9,7 +9,6 @@ from enums import Marketplace, MessageType
 from readers import read_excel_data
 import analysis_tools.ozon
 import datapacks
-import writers
 import writers.ozon
 
 
@@ -75,8 +74,7 @@ class MainWindow(QWidget):
         """Выводит сообщение в окне"""
         if msg_type == MessageType.INFO:
             return QMessageBox.information(self, title, text)
-
-        if msg_type == MessageType.ERROR:
+        elif msg_type == MessageType.ERROR:
             return QMessageBox.critical(self, title, text)
 
         raise NotImplementedError('Тип MessageBox не реалиован')
