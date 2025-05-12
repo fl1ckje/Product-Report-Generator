@@ -1,12 +1,10 @@
 """Представляет графический интерфейс приложения"""
-
 from os import getcwd
-from os.path import dirname
-
-from PySide6.QtWidgets import (QWidget,  QVBoxLayout, QLabel, QHBoxLayout, QLineEdit,
-                               QPushButton, QFileDialog, QMessageBox, QComboBox, QGroupBox)
+from PySide6.QtWidgets import (QWidget,  QVBoxLayout, QHBoxLayout,
+                               QPushButton, QMessageBox, QComboBox, QGroupBox)
 from PySide6.QtCore import Qt
 
+from widgets import ExcelFilepathBrowser
 from enums import Marketplace, MessageType
 from readers import read_excel_data
 import analysis_tools.ozon
@@ -37,7 +35,7 @@ class MainWindow(QWidget):
         marketplace_groupbox.setLayout(marketplace_layout)
         main_layout.addWidget(marketplace_groupbox)
 
-        self.input_file_browser = FilepathBrowser(
+        self.input_file_browser = ExcelFilepathBrowser(
             'Файл с данными:', 'Укажите путь к файлу с данными', getcwd())
         main_layout.addWidget(self.input_file_browser)
 
@@ -56,7 +54,8 @@ class MainWindow(QWidget):
         try:
             df = read_excel_data(self.input_file_browser.filepath())
 
-            marketplace = Marketplace(self.__marketplace_combobox.currentText())
+            marketplace = Marketplace(
+                self.__marketplace_combobox.currentText())
             if marketplace == Marketplace.OZON:
                 data = datapacks.OzonData(df)
                 analysis_tools.ozon.analyse_data(data)
@@ -81,38 +80,3 @@ class MainWindow(QWidget):
             return QMessageBox.critical(self, title, text)
 
         raise NotImplementedError('Тип MessageBox не реалиован')
-
-
-class FilepathBrowser(QWidget):
-    """Виджет установки и показа пути к файлу"""
-
-    def __init__(self, widget_caption, dialog_caption, file_dir):
-        super().__init__()
-
-        self.__caption = dialog_caption
-        self.__file_dir = file_dir
-
-        layout = QHBoxLayout()
-        self.setLayout(layout)
-
-        label = QLabel(widget_caption)
-        layout.addWidget(label)
-
-        self.__path_input = QLineEdit()
-        layout.addWidget(self.__path_input)
-
-        browse_button = QPushButton('Обзор...')
-        browse_button.clicked.connect(self.browse_file)
-        layout.addWidget(browse_button)
-
-    def browse_file(self):
-        """Показывает диалог для установки пути к файлу"""
-        filepath, _ = QFileDialog.getOpenFileName(self, self.__caption, self.__file_dir,
-                                                  'Файл Excel (*.xls *.xlsx)')
-        if filepath:
-            self.__path_input.setText(filepath)
-            self.__file_dir = dirname(filepath)
-
-    def filepath(self):
-        """Возвращает путь к файлу"""
-        return self.__path_input.text()
