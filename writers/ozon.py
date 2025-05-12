@@ -3,6 +3,7 @@
 from pandas import ExcelWriter
 
 from misc.formats import DATE_FORMAT, CURRENCY_FORMAT, PERCENTAGE_FORMAT
+from misc.colors import GREY
 from datapacks import OzonData
 from analysis_tools.ozon import FEE_PERCENTAGE, FEE_RATE, FEE_RUB, LAST_MILE_RUB, LOGISTICS_RUB, MID_SELL_PRICE, LOC_IDX, TOTAL
 
@@ -60,7 +61,7 @@ def save_data(filepath: str, data: OzonData):
 
             # sales header formatting
             sales_header_format = workbook.add_format(
-                {'bold': True, 'align': 'left', 'bg_color': '#D9D9D9'})
+                {'bold': True, 'align': 'left', 'bg_color': GREY})
             for col_num, value in enumerate(data.sales.columns.values):
                 worksheet.write(sales_start_row, col_num,
                                 value, sales_header_format)
