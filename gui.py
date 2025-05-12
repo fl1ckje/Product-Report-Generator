@@ -3,15 +3,14 @@
 from os import getcwd
 from os.path import dirname
 
-from PySide6.QtWidgets import (QWidget,  QVBoxLayout, QLabel, QHBoxLayout, QLineEdit,  # pylint: disable=no-name-in-module
-                               QPushButton, QFileDialog, QMessageBox)
-from PySide6.QtCore import Qt  # pylint: disable=no-name-in-module
+from PySide6.QtWidgets import (QWidget,  QVBoxLayout, QLabel, QHBoxLayout, QLineEdit,
+                               QPushButton, QFileDialog, QMessageBox, QComboBox, QGroupBox)
+from PySide6.QtCore import Qt
 
-from app_props import AppProps
 from enums import Marketplace, MessageType
 from readers import read_excel_data
 import analysis_tools.ozon
-import data_packs.ozon
+import datapacks
 import writers
 import writers.ozon
 
@@ -22,34 +21,51 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle('Анализ финансового отчёта '
-                            f'{AppProps.marketplace().value}')
+        self.setWindowTitle('Анализ финансового отчёта')
         self.setFixedSize(640, 0)
 
-        layout = QVBoxLayout(self)
-        self.setLayout(layout)
+        main_layout = QVBoxLayout(self)
+        self.setLayout(main_layout)
+
+        marketplace_groupbox = QGroupBox()
+        marketplace_groupbox.setTitle('Магазин')
+        marketplace_layout = QHBoxLayout()
+        self.__marketplace_combobox = QComboBox()
+        self.__marketplace_combobox.addItems(
+            [item.value for item in Marketplace])
+        marketplace_layout.addWidget(self.__marketplace_combobox)
+        marketplace_groupbox.setLayout(marketplace_layout)
+        main_layout.addWidget(marketplace_groupbox)
 
         self.input_file_browser = FilepathBrowser(
             'Файл с данными:', 'Укажите путь к файлу с данными', getcwd())
-        layout.addWidget(self.input_file_browser)
+        main_layout.addWidget(self.input_file_browser)
 
-        generate_report_button = QPushButton("Проанализировать")
+        generate_report_button = QPushButton('Проанализировать')
         generate_report_button.clicked.connect(self.analyse_data)
-        layout.addWidget(generate_report_button,
-                         alignment=Qt.AlignmentFlag.AlignHCenter)
+        main_layout.addWidget(generate_report_button,
+                              alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self.show()
 
     def analyse_data(self):
-        """Показывает отчёт"""
+        """
+        Читает и анализирует отчёт в
+        зависимости от выбранного магазина
+        """
         try:
             df = read_excel_data(self.input_file_browser.filepath())
-            if AppProps.marketplace() == Marketplace.OZON:
-                data = data_packs.ozon.OzonData(df)
+
+            marketplace = Marketplace(self.__marketplace_combobox.currentText())
+            if marketplace == Marketplace.OZON:
+                data = datapacks.OzonData(df)
                 analysis_tools.ozon.analyse_data(data)
                 writers.ozon.save_data(
                     self.input_file_browser.filepath(), data)
-            # elif Config.marketplace() == Marketplace.WB:
+            elif marketplace == Marketplace.WILDBERRIES:
+                # data = data_packs.WildberriesData(df)
+                pass
+
             self.show_message(MessageType.INFO, 'Результат',
                               'Анализ проведён успешно!')
         except (ValueError, KeyError, FileNotFoundError,

@@ -1,7 +1,6 @@
-"""Контейнеры для данных ОЗОН"""
+"""Контейнеры для данных магазинов"""
 
 from pandas import DataFrame
-# pylint: disable=too-few-public-methods
 
 
 class OzonData:

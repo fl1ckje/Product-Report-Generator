@@ -11,4 +11,4 @@ class MessageType(Enum):
 class Marketplace(Enum):
     """Маркетплейс для анализа данных"""
     OZON = 'ОЗОН'
-    WB = 'Wildberries'
+    WILDBERRIES = 'Wildberries'

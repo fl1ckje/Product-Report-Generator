@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from data_packs.ozon import OzonData
+from datapacks import OzonData
 from .utils import check_missing_columns
 
 _ACCRUAL_DATE = 'Дата начисления'
