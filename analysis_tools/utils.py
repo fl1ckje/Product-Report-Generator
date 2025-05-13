@@ -12,6 +12,6 @@ def check_missing_columns(df: DataFrame, columns: list[str]):
     if missing_cols:
         raise ValueError('Ошибка анализа данных: следующие столбцы отсутствуют в таблице:<br>'
                          f' {', '.join(missing_cols)}.<br>'
-                         'Possible issues:<br>'
-                         '1) Outdated app (update the app or leave a bug report)<br>'
-                         '2) Check your data file for suitable columns by name')
+                         'Возможные причины:<br>'
+                         '1) Старая версия приложения<br>'
+                         '2) Нарушена целостность структуры таблицы')

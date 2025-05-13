@@ -6,9 +6,3 @@ class MessageType(Enum):
     """Тип сообщения для MessageBox"""
     INFO = auto()
     ERROR = auto()
-
-
-class Marketplace(Enum):
-    """Маркетплейс для анализа данных"""
-    OZON = 'ОЗОН'
-    WILDBERRIES = 'Wildberries'
