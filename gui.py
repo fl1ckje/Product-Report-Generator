@@ -1,10 +1,10 @@
 """Представляет графический интерфейс приложения"""
 from os import getcwd
-from PySide6.QtWidgets import (QWidget,  QVBoxLayout, QListWidget, QTabWidget,
-                               QPushButton, QMessageBox, QLabel)
+from PySide6.QtWidgets import (
+    QWidget,  QVBoxLayout, QTabWidget, QPushButton, QMessageBox)
 from PySide6.QtCore import Qt
 
-from widgets import FilepathBrowser, DragAndDropList
+from widgets import FilepathBrowser, DragAndDropListWithControls
 from enums import MessageType
 from readers import read_excel_data
 import analysis_tools.ozon
@@ -20,7 +20,9 @@ class MainWindow(QWidget):
 
         self.setAcceptDrops(True)
         self.setWindowTitle('Анализ финансового отчёта')
-        self.setFixedSize(640, 0)
+        self.setBaseSize(640, 200)
+        self.setMinimumSize(640, 200)
+        self.setMaximumSize(800, 600)
 
         main_layout = QVBoxLayout(self)
         self.setLayout(main_layout)
@@ -32,6 +34,7 @@ class MainWindow(QWidget):
         ozon_tab = QWidget()
         tab_widget.addTab(ozon_tab, 'ОЗОН')
         ozon_layout = QVBoxLayout(ozon_tab)
+        ozon_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # input file field
         self.__input_file_browser = FilepathBrowser(
@@ -52,17 +55,18 @@ class MainWindow(QWidget):
         tab_widget.addTab(wb_tab, "Wildberries")
         wb_layout = QVBoxLayout(wb_tab)
 
-        # drag and drop help tip label
-        wb_zip_list_label = QLabel("Перетащите zip файлы с отчётами в область ниже:")
-        wb_layout.addWidget(wb_zip_list_label)
-
         # zip files drag and drop list
-        self.__wb_list = DragAndDropList('zip')
+        self.__wb_list = DragAndDropListWithControls('zip')
         wb_layout.addWidget(self.__wb_list)
+
+        # generate report button
+        wb_report_button = QPushButton('Проанализировать')
+        wb_layout.addWidget(
+            wb_report_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         main_layout.addWidget(tab_widget)
 
-    def generate_ozon_report(self):
+    def generate_ozon_report(self) -> None:
         """
         Читает и анализирует отчёт в
         зависимости от выбранного магазина
