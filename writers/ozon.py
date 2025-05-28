@@ -2,7 +2,7 @@
 
 from pandas import ExcelWriter
 
-from misc.formats import DATE_FORMAT, CURRENCY_FORMAT, PERCENTAGE_FORMAT
+from misc.formats import OZON_DATE_FORMAT, CURRENCY_FORMAT, PERCENTAGE_FORMAT
 from misc.colors import GREY
 from datapacks import OzonData
 from analysis_tools.ozon import FEE_PERCENTAGE, FEE_RATE, FEE_RUB, LAST_MILE_RUB, LOGISTICS_RUB, MID_SELL_PRICE, LOC_IDX, TOTAL
@@ -11,7 +11,7 @@ from analysis_tools.ozon import FEE_PERCENTAGE, FEE_RATE, FEE_RUB, LAST_MILE_RUB
 def save_data(filepath: str, data: OzonData):
     """Сохраняет входные и выходные таблицы в excel файл"""
     with ExcelWriter(path=filepath, engine='xlsxwriter',
-                     date_format=DATE_FORMAT, datetime_format=DATE_FORMAT) as writer:
+                     date_format=OZON_DATE_FORMAT, datetime_format=OZON_DATE_FORMAT) as writer:
         workbook = writer.book
 
         def save_input_data(sheet_name):

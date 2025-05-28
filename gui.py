@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 
 from widgets import FilepathBrowser, DragAndDropListWithControls
 from enums import MessageType
-from readers import read_excel_data
+from readers import read_ozon_data, read_wb_data
 import analysis_tools.ozon
 import datapacks
 import writers.ozon
@@ -61,18 +61,16 @@ class MainWindow(QWidget):
 
         # generate report button
         wb_report_button = QPushButton('Проанализировать')
+        wb_report_button.clicked.connect(self.generate_wb_report)
         wb_layout.addWidget(
             wb_report_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         main_layout.addWidget(tab_widget)
 
     def generate_ozon_report(self) -> None:
-        """
-        Читает и анализирует отчёт в
-        зависимости от выбранного магазина
-        """
+        """Читает и анализирует отчёт с маркетплейса ozon"""
         try:
-            df = read_excel_data(self.__input_file_browser.filepath())
+            df = read_ozon_data(self.__input_file_browser.filepath())
             data = datapacks.OzonData(df)
 
             analysis_tools.ozon.analyse_data(data)
@@ -81,6 +79,16 @@ class MainWindow(QWidget):
             self.show_message(MessageType.INFO, 'Результат',
                               'Анализ проведён успешно!')
 
+        except (ValueError, KeyError, FileNotFoundError,
+                PermissionError) as e:
+            self.show_message(MessageType.ERROR, 'Ошибка', str(e))
+
+    def generate_wb_report(self) -> None:
+        """Читает и анализирует отчёты с маркетплейса wildberries"""
+        try:
+            df = read_wb_data(self.__wb_list.items())
+            self.show_message(MessageType.INFO, 'Результат',
+                              str(df.head()))
         except (ValueError, KeyError, FileNotFoundError,
                 PermissionError) as e:
             self.show_message(MessageType.ERROR, 'Ошибка', str(e))
