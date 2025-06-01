@@ -1,15 +1,18 @@
 """Представляет графический интерфейс приложения"""
 from os import getcwd
+from pathlib import Path
 from PySide6.QtWidgets import (
     QWidget,  QVBoxLayout, QTabWidget, QPushButton, QMessageBox)
 from PySide6.QtCore import Qt
 
+import analysis_tools.wb
 from widgets import FilepathBrowser, DragAndDropListWithControls
 from enums import MessageType
 from readers import read_ozon_data, read_wb_data
 import analysis_tools.ozon
 import datapacks
 import writers.ozon
+import writers.wb
 
 
 class MainWindow(QWidget):
@@ -37,10 +40,10 @@ class MainWindow(QWidget):
         ozon_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # input file field
-        self.__input_file_browser = FilepathBrowser(
+        self.__input_ozon_file_browser = FilepathBrowser(
             'Файл с данными:', 'Укажите путь к файлу с данными магазина ОЗОН',
             getcwd(), 'Файл Excel (*.xls *.xlsx)')
-        ozon_layout.addWidget(self.__input_file_browser)
+        ozon_layout.addWidget(self.__input_ozon_file_browser)
 
         # generate report button
         ozon_report_button = QPushButton('Проанализировать')
@@ -70,11 +73,12 @@ class MainWindow(QWidget):
     def generate_ozon_report(self) -> None:
         """Читает и анализирует отчёт с маркетплейса ozon"""
         try:
-            df = read_ozon_data(self.__input_file_browser.filepath())
+            df = read_ozon_data(self.__input_ozon_file_browser.filepath())
             data = datapacks.OzonData(df)
 
             analysis_tools.ozon.analyse_data(data)
-            writers.ozon.save_data(self.__input_file_browser.filepath(), data)
+            writers.ozon.save_data(
+                self.__input_ozon_file_browser.filepath(), data)
 
             self.show_message(MessageType.INFO, 'Результат',
                               'Анализ проведён успешно!')
@@ -87,8 +91,15 @@ class MainWindow(QWidget):
         """Читает и анализирует отчёты с маркетплейса wildberries"""
         try:
             df = read_wb_data(self.__wb_list.items())
+            data = datapacks.WbData(df)
+
+            analysis_tools.wb.analyse_data(data)
+            out_path = Path(getcwd(), f'wb_output.xlsx')
+            writers.wb.save_data(out_path, data)
+
             self.show_message(MessageType.INFO, 'Результат',
-                              str(df.head()))
+                              f'Анализ проведён успешно! Файл сохранён в {out_path}')
+
         except (ValueError, KeyError, FileNotFoundError,
                 PermissionError) as e:
             self.show_message(MessageType.ERROR, 'Ошибка', str(e))

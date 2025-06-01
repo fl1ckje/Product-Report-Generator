@@ -1,7 +1,7 @@
 """Функционал анализа данных ОЗОН"""
 
 import numpy as np
-import pandas as pd
+from pandas import DataFrame
 
 from datapacks import OzonData
 from .utils import check_missing_columns
@@ -36,7 +36,7 @@ _analysis_headers = [_ACCRUAL_DATE,
                      TOTAL]
 
 
-def analyse_data(data: OzonData):
+def analyse_data(data: OzonData) -> None:
     """Формирует анализ данных ОЗОН"""
     check_missing_columns(data.input, _analysis_headers)
 
@@ -65,4 +65,4 @@ def analyse_data(data: OzonData):
             LOC_IDX: int(grp[LOC_IDX].mean()),
             TOTAL: round(grp[TOTAL].mean(), 2),
         })
-    data.sales = pd.DataFrame(sales)
+    data.sales = DataFrame(sales)

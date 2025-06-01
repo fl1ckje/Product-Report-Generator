@@ -4,20 +4,18 @@ import zipfile
 import pandas as pd
 from pathlib import Path
 from typing import List
-from misc.formats import OZON_DATE_FORMAT, WB_DATE_FORMAT
 
 from pandas import DataFrame, read_excel
 
 
-def read_excel_data(path: str, date_format: str) -> DataFrame | None:
+def read_excel_data(path: str) -> DataFrame | None:
     """Читает данные из excel файла в датафрейм"""
-    return read_excel(path, engine='calamine', date_format=date_format)
+    return read_excel(path, engine='calamine')
 
 
 def extract_zip_to_temp(path: str) -> Path:
     """Извлекает содержимое zip архивов во временные директории"""
     temp_dir = tempfile.mkdtemp(prefix='xlsx_data')
-    print(temp_dir)
     with zipfile.ZipFile(path, 'r') as zip_ref:
         zip_ref.extractall(temp_dir)
     return Path(temp_dir)
@@ -25,7 +23,7 @@ def extract_zip_to_temp(path: str) -> Path:
 
 def read_ozon_data(path: str) -> DataFrame | None:
     """Читает данные из excel файла маркетплейса ozon в датафрейм"""
-    return read_excel_data(path, OZON_DATE_FORMAT)
+    return read_excel_data(path)
 
 
 def read_wb_data(paths: List[str]) -> DataFrame | None:
@@ -43,7 +41,7 @@ def read_wb_data(paths: List[str]) -> DataFrame | None:
             if len(xlsx_files) > 1:
                 raise ValueError(
                     f'Несколько XLSX файлов найдено в {temp_dir}, ожидается только один')
-            df = read_excel_data(xlsx_files[0], WB_DATE_FORMAT)
+            df = read_excel_data(xlsx_files[0])
             dfs.append(df)
         finally:
             from shutil import rmtree
