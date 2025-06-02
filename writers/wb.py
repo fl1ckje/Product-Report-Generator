@@ -11,12 +11,24 @@ def save_data(filepath: str, data: WbData):
     with ExcelWriter(path=filepath, engine='xlsxwriter') as writer:
         workbook = writer.book
 
+        def save_input_data(sheet_name):
+            data.input.to_excel(writer, sheet_name=sheet_name, index=False)
+
+            worksheet = writer.sheets[sheet_name]
+
+            header_format = workbook.add_format({
+                'text_wrap': True,
+                'bold': True,
+                'align': 'left'
+            })
+            for col_num, value in enumerate(data.input.columns.values):
+                worksheet.write(0, col_num, value, header_format)
+
         def save_analysis_data(sheet_name):
             data.output.to_excel(writer, sheet_name=sheet_name, index=False)
 
             worksheet = writer.sheets[sheet_name]
 
-            # header formatting
             header_format = workbook.add_format({
                 'text_wrap': True,
                 'bold': True,
@@ -29,3 +41,4 @@ def save_data(filepath: str, data: WbData):
             worksheet.autofit()
 
         save_analysis_data('Обработанные данные')
+        save_input_data('Исходник')
