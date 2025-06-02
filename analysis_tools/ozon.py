@@ -1,4 +1,5 @@
 """Функционал анализа данных ОЗОН"""
+from enum import Enum
 
 import numpy as np
 from pandas import DataFrame
@@ -6,63 +7,74 @@ from pandas import DataFrame
 from datapacks import OzonData
 from .utils import check_missing_columns
 
-_ACCRUAL_DATE = 'Дата начисления'
-_ACCRUAL_TYPE = 'Тип начисления'
-_ARTICLE = 'Артикул'
-_FOR_SALE_BEFORE_FEES = 'За продажу или возврат до вычета комиссий и услуг'
-FEE_RATE = 'Ставка комиссии'
-_FEE_PER_SALE = 'Комиссия за продажу'
-_LAST_MILE = ('Последняя миля (разбивается по товарам пропорционально '
-              'доле цены товара в сумме отправления)')
-_LOGISTICS = 'Логистика'
-LOC_IDX = 'Индекс локализации'
-TOTAL = 'Итого'
 
+class Headers(Enum):
+    ACCRUAL_DATE = 'Дата начисления'
+    ACCRUAL_TYPE = 'Тип начисления'
+    ARTICLE = 'Артикул'
+    FOR_SALE_BEFORE_FEES = 'За продажу или возврат до вычета комиссий и услуг'
+    FEE_RATE = 'Ставка комиссии'
+    FEE_PER_SALE = 'Комиссия за продажу'
+    LAST_MILE = ('Последняя миля (разбивается по товарам пропорционально '
+                 'доле цены товара в сумме отправления)')
+    LOGISTICS = 'Логистика'
+    LOC_IDX = 'Индекс локализации'
+    TOTAL = 'Итого'
+
+    @staticmethod
+    def list():
+        return list(map(lambda h: h.value, Headers))
+
+
+_ARTICLE = 'Артикул'
+_SALES_AMOUNT = 'Кол-во продаж'
 MID_SELL_PRICE = 'Ср. цена продажи'
+FEE_PERCENTAGE = 'Комиссия, %'
+FEE_RATE = 'Ставка комиссии'
 FEE_RUB = 'Комиссия, руб'
 LAST_MILE_RUB = 'Последняя миля, руб'
 LOGISTICS_RUB = 'Логистика, руб'
-FEE_PERCENTAGE = 'Комиссия, %'
-
-_analysis_headers = [_ACCRUAL_DATE,
-                     _ACCRUAL_TYPE,
-                     _ARTICLE,
-                     _FOR_SALE_BEFORE_FEES,
-                     FEE_RATE,
-                     _FEE_PER_SALE,
-                     _LAST_MILE,
-                     _LOGISTICS,
-                     LOC_IDX,
-                     TOTAL]
+LOC_IDX = 'Индекс локализации'
+TOTAL = 'Итого'
 
 
 def analyse_data(data: OzonData) -> None:
     """Формирует анализ данных ОЗОН"""
-    check_missing_columns(data.input, _analysis_headers)
+    check_missing_columns(data.input, Headers.list())
 
-    data.input[LOC_IDX] = data.input[LOC_IDX].replace(np.nan, 0)
+    data.input[Headers.LOC_IDX.value] = \
+        data.input[Headers.LOC_IDX.value].replace(np.nan, 0)
 
-    data.totals = data.input.groupby('Тип начисления')[
-        'Итого'].sum().abs().reset_index()
-    min_date = data.input['Дата начисления'].dt.date.min()
-    max_date = data.input['Дата начисления'].dt.date.max()
+    data.totals = data.input.groupby(
+        Headers.ACCRUAL_TYPE.value)[Headers.TOTAL.value].sum().abs().reset_index()
+    min_date = data.input[Headers.ACCRUAL_DATE.value].dt.date.min()
+    max_date = data.input[Headers.ACCRUAL_DATE.value].dt.date.max()
     data.totals.columns = ['Период',
                            f'{min_date.strftime('%d.%m.%Y')}'
                            f' - {max_date.strftime('%d.%m.%Y')}']
 
-    grouped_sales = data.input[data.input[_ACCRUAL_TYPE]
-                               == 'Доставка покупателю'].groupby(_ARTICLE)
+    sales_groups = data.input[
+        data.input[Headers.ACCRUAL_TYPE.value] == 'Доставка покупателю'].groupby(Headers.ARTICLE.value)
     sales = []
-    for _, grp in grouped_sales:
+    for _, grp in sales_groups:
         sales.append({
-            'Артикул': grp[_ARTICLE].iloc[0],
-            'Кол-во продаж': len(grp),
-            MID_SELL_PRICE: round(grp[_FOR_SALE_BEFORE_FEES].mean(), 2),
-            FEE_PERCENTAGE: round(grp[FEE_RATE].mean() * 100, 2),
-            FEE_RUB: abs(round(grp[_FEE_PER_SALE].mean(), 2)),
-            LAST_MILE_RUB: abs(round(grp[_LAST_MILE].mean(), 2)),
-            LOGISTICS_RUB: abs(round(grp[_LOGISTICS].mean(), 2)),
-            LOC_IDX: int(grp[LOC_IDX].mean()),
-            TOTAL: round(grp[TOTAL].mean(), 2),
+            _ARTICLE:
+                grp[Headers.ARTICLE.value].iloc[0],
+            _SALES_AMOUNT:
+                len(grp),
+            MID_SELL_PRICE:
+                round(grp[Headers.FOR_SALE_BEFORE_FEES.value].mean(), 2),
+            FEE_PERCENTAGE:
+                round(grp[Headers.FEE_RATE.value].mean() * 100, 2),
+            FEE_RUB:
+                abs(round(grp[Headers.FEE_PER_SALE.value].mean(), 2)),
+            LAST_MILE_RUB:
+                abs(round(grp[Headers.LAST_MILE.value].mean(), 2)),
+            LOGISTICS_RUB:
+                abs(round(grp[Headers.LOGISTICS.value].mean(), 2)),
+            LOC_IDX:
+                int(grp[Headers.LOC_IDX.value].mean()),
+            TOTAL:
+                round(grp[Headers.TOTAL.value].mean(), 2),
         })
     data.sales = DataFrame(sales)

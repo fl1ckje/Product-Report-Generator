@@ -1,51 +1,68 @@
 """Функции для чтения данных"""
+from enum import Enum
+
 import numpy as np
 from pandas import DataFrame
 
 from datapacks import WbData
 from .utils import check_missing_columns
 
-_NAME = 'Название'
-_PAY_JUST = 'Обоснование для оплаты'
-_SALE = 'Продажа'
-_LOGISTICS = 'Логистика'
-_SUPPLY_ARTICLE = 'Артикул поставщика'
-_SIZE = 'Размер'
-_AMOUNT = 'Кол-во'
-_RETAIL_PRICE = 'Цена розничная'
-_SOLD_TRANSFER = 'К перечислению Продавцу за реализованный Товар'
-_SERVICES_FOR_DELIVERY = 'Услуги по доставке товара покупателю'
 
-_analysis_headers = [_NAME,
-                     _PAY_JUST,
-                     _SUPPLY_ARTICLE,
-                     _SIZE,
-                     _AMOUNT,
-                     _RETAIL_PRICE,
-                     _SOLD_TRANSFER,
-                     _SERVICES_FOR_DELIVERY]
+class Headers(Enum):
+    NUMBER = '№'
+    DELIVERY_NUMBER = 'Номер поставки'
+    NAME = 'Название'
+    PAY_JUST = 'Обоснование для оплаты'
+    SUPPLY_ARTICLE = 'Артикул поставщика'
+    SIZE = 'Размер'
+    AMOUNT = 'Кол-во'
+    RETAIL_PRICE = 'Цена розничная'
+    SOLD_TRANSFER = 'К перечислению Продавцу за реализованный Товар'
+    SERVICES_FOR_DELIVERY = 'Услуги по доставке товара покупателю'
+
+    @staticmethod
+    def list():
+        return list(map(lambda h: h.value, Headers))
+
+
+_SALE = 'Продажа'
+_PRODUCT_NAME = 'Наименование товара'
+_ARTICLE = 'Артикул'
+_SIZE = 'Размер'
+_SALES_AMOUNT = 'Количество продаж'
+_AVG_SALE_PRICE = 'Средняя цена продажи'
+_MP_COMMISSION = 'Комиссия МП'
+_LOGISTICS = 'Логистика'
 
 
 def analyse_data(data: WbData):
     """Формирует анализ данных WB"""
-    check_missing_columns(data.input, _analysis_headers)
+    check_missing_columns(data.input, Headers.list())
+    data.input = data.input.replace(np.nan, '')
 
-    data.input = data.input.replace(np.nan, 0)
-    data.input = data.input[data.input[_NAME] != np.nan]
-    sale_groups = data.input[data.input[_PAY_JUST] == _SALE].groupby(_NAME)
-    logistics_groups = data.input[data.input[_PAY_JUST]
-                                  == _LOGISTICS].groupby(_NAME)
-    result = []
+    sale_groups = data.input[data.input[Headers.PAY_JUST.value]
+                             == _SALE].groupby(Headers.NAME.value)
+    logistics_groups = data.input[data.input[Headers.PAY_JUST.value]
+                                  == _LOGISTICS].groupby(Headers.NAME.value)
+    totals = []
     for name, grp in sale_groups:
-        result.append({
-            'Наименование товара': grp[_NAME].iloc[0],
-            'Артикул': grp[_SUPPLY_ARTICLE].iloc[0],
-            _SIZE: grp[_SIZE].iloc[0],
-            'Количество продаж': grp[_AMOUNT].sum(),
-            'Средняя цена продажи': round(grp[_RETAIL_PRICE].mean(), 2),
-            'Комиссия МП': round(grp[_RETAIL_PRICE].mean(), 2) - round(grp[_SOLD_TRANSFER].mean(), 2),
-            _LOGISTICS: logistics_groups[_SERVICES_FOR_DELIVERY].sum()[
-                name] / grp[_AMOUNT].sum()
+        totals.append({
+            _PRODUCT_NAME:
+                grp[Headers.NAME.value].iloc[0],
+            _ARTICLE:
+                grp[Headers.SUPPLY_ARTICLE.value].iloc[0],
+            _SIZE:
+                grp[Headers.SIZE.value].iloc[0],
+            _SALES_AMOUNT:
+                grp[Headers.AMOUNT.value].sum(),
+            _AVG_SALE_PRICE:
+                round(grp[Headers.RETAIL_PRICE.value].mean(), 2),
+            _MP_COMMISSION:
+                round(grp[Headers.RETAIL_PRICE.value].mean(), 2) -
+                round(grp[Headers.SOLD_TRANSFER.value].mean(), 2),
+            _LOGISTICS:
+                logistics_groups[Headers.SERVICES_FOR_DELIVERY.value].sum()[name] /
+                grp[Headers.AMOUNT.value].sum()
         })
 
-    data.output = DataFrame(result)
+    data.output = DataFrame(totals)

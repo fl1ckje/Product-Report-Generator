@@ -5,7 +5,8 @@ from pandas import ExcelWriter
 from misc.formats import OZON_DATE_FORMAT, CURRENCY_FORMAT, PERCENTAGE_FORMAT
 from misc.colors import GREY
 from datapacks import OzonData
-from analysis_tools.ozon import FEE_PERCENTAGE, FEE_RATE, FEE_RUB, LAST_MILE_RUB, LOGISTICS_RUB, MID_SELL_PRICE, LOC_IDX, TOTAL
+from analysis_tools.ozon import (FEE_PERCENTAGE, FEE_RATE, FEE_RUB, LAST_MILE_RUB,
+                                 LOGISTICS_RUB, MID_SELL_PRICE, LOC_IDX, TOTAL)
 
 
 def save_data(filepath: str, data: OzonData):
