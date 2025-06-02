@@ -9,13 +9,13 @@ from analysis_tools.ozon import (FEE_PERCENTAGE, FEE_RATE, FEE_RUB, LAST_MILE_RU
                                  LOGISTICS_RUB, MID_SELL_PRICE, LOC_IDX, TOTAL)
 
 
-def save_data(filepath: str, data: OzonData):
+def save_data(filepath: str, data: OzonData) -> None:
     """Сохраняет входные и выходные таблицы в excel файл"""
     with ExcelWriter(path=filepath, engine='xlsxwriter',
                      date_format=OZON_DATE_FORMAT, datetime_format=OZON_DATE_FORMAT) as writer:
         workbook = writer.book
 
-        def save_input_data(sheet_name):
+        def save_input_data(sheet_name: str) -> None:
             data.input.to_excel(writer, sheet_name=sheet_name, index=False)
 
             worksheet = writer.sheets[sheet_name]
@@ -38,7 +38,7 @@ def save_data(filepath: str, data: OzonData):
 
             worksheet.autofit()
 
-        def save_analysis_data(sheet_name):
+        def save_analysis_data(sheet_name: str) -> None:
             data.totals.to_excel(writer, sheet_name=sheet_name, index=False)
 
             sales_start_row = len(data.totals)+2

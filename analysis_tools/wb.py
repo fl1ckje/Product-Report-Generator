@@ -75,7 +75,7 @@ class Headers(Enum):
     PAID_ACCEPTANCE_BOX_NUMB = 'Номер короба для платной приемки'
 
     @staticmethod
-    def list():
+    def list() -> list[str]:
         return list(map(lambda h: h.value, Headers))
 
 
@@ -89,7 +89,7 @@ _MP_COMMISSION = 'Комиссия МП'
 _LOGISTICS = 'Логистика'
 
 
-def analyse_data(data: WbData):
+def analyse_data(data: WbData) -> None:
     """Формирует анализ данных WB"""
     check_missing_columns(data.input, Headers.list())
     data.input = data.input.replace(np.nan, '')

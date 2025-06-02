@@ -22,7 +22,7 @@ class Headers(Enum):
     TOTAL = 'Итого'
 
     @staticmethod
-    def list():
+    def list()-> list[str]:
         return list(map(lambda h: h.value, Headers))
 
 
